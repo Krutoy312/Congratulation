@@ -57,6 +57,28 @@
     to{ opacity:.8; transform:translateY(0); }
   }
 
+  /* --- events banner над таймером --- */
+  .event-banner{
+    min-height:46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    font-weight:600;
+    line-height:1.35;
+    color:var(--accent);
+    text-shadow:0 0 14px rgba(255,61,129,.45);
+    margin:0 0 12px;
+    padding:0 10px;
+    opacity:0;
+    transform:translateY(8px) scale(.96);
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .event-banner.on{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+
   /* --- heartbeat intro overlay --- */
   .intro-overlay{
     position:fixed;
@@ -455,6 +477,8 @@
   <h1>Любимая моя 🖤</h1>
   <p class="subtitle">мы вместе уже</p>
 
+  <div class="event-banner" id="event-banner"></div>
+
   <div class="timer">
     <div class="unit"><span class="num" id="n-months">0</span><span class="label">мес.</span></div>
     <div class="unit"><span class="num" id="n-days">0</span><span class="label">дн.</span></div>
@@ -541,31 +565,110 @@
     prevSeconds = seconds;
   }
 
-  // ---- вступительная анимация: счётчик "разгоняется" от 0 до текущих значений ----
-  const COUNT_DURATION = 1800;
+  // ---- вступительная анимация: таймер "проживает" всю историю с событиями ----
+  // на событии таймер замедляется и над ним всплывает фраза
+  const EVENTS = [
+    ['2026-01-01','2026-01-05','Привет'],
+    ['2026-01-08','2026-01-12','Ты можешь какому-то помочь?'],
+    ['2026-01-15','2026-01-22','пойдешь с нами играть'],
+    ['2026-02-08','2026-02-12','я хочу с тобой поговорить'],
+    ['2026-02-14','2026-02-17','с днём святого валентина'],
+    ['2026-02-24','2026-03-12','Ты ахуенная женщина'],
+    ['2026-03-15','2026-03-18','Я бы встречался с тобой'],
+    ['2026-03-20','2026-03-22','Я люблю тебя'],
+    ['2026-03-22','2026-03-24','Не думал, что по кому-то буду скучать'],
+    ['2026-03-28','2026-04-03','Ты меня зацепил, но при этом такое ебанутое создание'],
+    ['2026-04-12','2026-04-17','Теряю контроль над телом (Я молодец)'],
+    ['2026-04-20','2026-04-25','Целуемся'],
+    ['2026-04-30','2026-05-07','Больно ходить в туалет'],
+    ['2026-05-11','2026-05-15','Я хочу чтоб ты кричала'],
+    ['2026-05-22','2026-05-26','Под штаны 👉👈'],
+    ['2026-05-27','2026-05-30','Пока пока Камила'],
+    ['2026-06-03','2026-06-08','Мероприятия на прекрасную женщину'],
+    ['2026-06-18','2026-06-25','совместные мероприятия'],
+  ];
+
+  const SWEEP_START = new Date('2026-01-01T00:00:00').getTime();
+  const TRANSIT_MS = 200;   // быстрый пролёт между событиями
+  const DWELL_MS = 1250;    // замедление на событии
+
+  const eventBanner = document.getElementById('event-banner');
+
+  function setTimerTo(ms){
+    if (ms <= START_DATE.getTime()){
+      elMonths.textContent = 0;
+      elDays.textContent = 0;
+      elHours.textContent = '00';
+      elMinutes.textContent = '00';
+      elSeconds.textContent = '00';
+      return;
+    }
+    const e = calcElapsed(new Date(ms));
+    elMonths.textContent = e.months;
+    elDays.textContent = e.days;
+    elHours.textContent = pad(e.hours);
+    elMinutes.textContent = pad(e.minutes);
+    elSeconds.textContent = pad(e.seconds);
+  }
+
+  function buildSegments(){
+    const segs = [];
+    const nowMs = Date.now();
+    let cursor = SWEEP_START;
+    for (const [from, to, text] of EVENTS){
+      const f = new Date(from + 'T00:00:00').getTime();
+      const t = Math.min(new Date(to + 'T23:59:59').getTime(), nowMs);
+      if (f > nowMs) break;
+      if (f > cursor) segs.push({ from:cursor, to:f, dur:TRANSIT_MS, text:null });
+      segs.push({ from:f, to:t, dur:DWELL_MS, text });
+      cursor = t;
+    }
+    if (cursor < nowMs) segs.push({ from:cursor, to:nowMs, dur:600, text:null });
+    return segs;
+  }
+
+  let sweepDone = false;
+  function finishSweep(){
+    if (sweepDone) return;
+    sweepDone = true;
+    eventBanner.classList.remove('on');
+    const t = calcElapsed(new Date());
+    prevSeconds = t.seconds;
+    tick();
+    setInterval(tick, 1000);
+    document.getElementById('envelope-wrap').classList.add('show');
+  }
 
   function runIntroCount(){
-    const target = calcElapsed(new Date());
-    const startTime = performance.now();
+    const segs = buildSegments();
+    let i = 0;
 
-    function frame(now){
-      const t = Math.min((now - startTime) / COUNT_DURATION, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      elMonths.textContent = Math.round(target.months * eased);
-      elDays.textContent = Math.round(target.days * eased);
-      elHours.textContent = pad(Math.round(target.hours * eased));
-      elMinutes.textContent = pad(Math.round(target.minutes * eased));
-      elSeconds.textContent = pad(Math.round(target.seconds * eased));
-
-      if (t < 1){
-        requestAnimationFrame(frame);
+    function runSeg(){
+      if (sweepDone) return;
+      if (i >= segs.length){ finishSweep(); return; }
+      const s = segs[i++];
+      if (s.text){
+        eventBanner.classList.remove('on');
+        void eventBanner.offsetWidth;
+        eventBanner.textContent = s.text;
+        eventBanner.classList.add('on');
       } else {
-        prevSeconds = target.seconds;
-        setInterval(tick, 1000);
-        document.getElementById('envelope-wrap').classList.add('show');
+        eventBanner.classList.remove('on');
       }
+      const t0 = performance.now();
+      function frame(now){
+        if (sweepDone) return;
+        const t = Math.min((now - t0) / s.dur, 1);
+        setTimerTo(s.from + (s.to - s.from) * t);
+        if (t < 1) requestAnimationFrame(frame);
+        else runSeg();
+      }
+      requestAnimationFrame(frame);
     }
-    requestAnimationFrame(frame);
+    runSeg();
+
+    // тап по экрану — промотать историю до конца
+    document.addEventListener('click', finishSweep, { once:true });
   }
 
   // ---- пролёт дат: перекидной календарь от начала отношений до сегодня ----
