@@ -6,12 +6,12 @@
 <title>Любимой — с любовью</title>
 <style>
   :root{
-    --bg1:#fff3e0;
-    --bg2:#ffe0e9;
-    --accent:#e8836b;
-    --accent-dark:#c85f47;
-    --paper:#fffaf3;
-    --text:#5a3d34;
+    --bg1:#12030b;
+    --bg2:#2a0316;
+    --accent:#ff3d81;
+    --accent-dark:#e0116f;
+    --paper:#1c0e15;
+    --text:#ffd9ea;
   }
   *{box-sizing:border-box;}
   html,body{
@@ -23,7 +23,7 @@
     overflow-x:hidden;
   }
   body{
-    background:linear-gradient(160deg,var(--bg1),var(--bg2) 60%,#ffd6cf);
+    background:radial-gradient(circle at 50% 0%, var(--bg2), var(--bg1) 55%, #000 100%);
     min-height:100vh;
     display:flex;
     align-items:center;
@@ -39,12 +39,51 @@
     font-size:22px;
     font-weight:700;
     margin:0 0 6px;
-    color:var(--accent-dark);
+    color:var(--accent);
+    text-shadow:0 0 18px rgba(255,61,129,.35);
+    opacity:0;
+    transform:translateY(10px);
+    animation:introFade .7s ease forwards;
   }
   .subtitle{
     font-size:14px;
-    opacity:.75;
-    margin:0 0 28px;
+    opacity:0;
+    margin:0 0 22px;
+    color:var(--text);
+    transform:translateY(10px);
+    animation:introFade .7s ease forwards .15s;
+  }
+  @keyframes introFade{
+    to{ opacity:.8; transform:translateY(0); }
+  }
+  h1.intro{ animation-fill-mode:forwards; }
+
+  /* --- timeline progress --- */
+  .timeline-track{
+    position:relative;
+    height:6px;
+    max-width:260px;
+    margin:0 auto 22px;
+    background:rgba(255,255,255,.08);
+    border-radius:999px;
+    opacity:0;
+    animation:introFade .6s ease forwards .3s;
+  }
+  .timeline-fill{
+    position:absolute;
+    inset:0;
+    width:0%;
+    background:linear-gradient(90deg,var(--accent-dark),var(--accent));
+    border-radius:999px;
+    box-shadow:0 0 10px rgba(255,61,129,.6);
+  }
+  .timeline-marker{
+    position:absolute;
+    top:50%;
+    left:0%;
+    font-size:16px;
+    transform:translate(-50%,-50%);
+    filter:drop-shadow(0 0 6px var(--accent));
   }
 
   /* --- floating hearts background --- */
@@ -75,18 +114,25 @@
     gap:8px;
     margin-bottom:8px;
     flex-wrap:wrap;
+    opacity:0;
+    transform:scale(.9);
+    animation:timerIn .5s ease forwards .35s;
+  }
+  @keyframes timerIn{
+    to{ opacity:1; transform:scale(1); }
   }
   .unit{
     background:var(--paper);
+    border:1px solid rgba(255,61,129,.25);
     border-radius:14px;
     padding:12px 6px;
     width:70px;
-    box-shadow:0 6px 16px rgba(200,95,71,.15);
+    box-shadow:0 6px 18px rgba(255,20,100,.25);
   }
   .unit .num{
     font-size:26px;
     font-weight:800;
-    color:var(--accent-dark);
+    color:var(--accent);
     font-variant-numeric:tabular-nums;
     display:block;
     transition:transform .25s ease;
@@ -95,15 +141,19 @@
   .unit .label{
     font-size:10px;
     letter-spacing:.03em;
-    opacity:.65;
+    opacity:.6;
+    color:var(--text);
     margin-top:2px;
     display:block;
   }
   .together-line{
     font-size:15px;
     margin:18px 0 34px;
+    color:var(--text);
+    opacity:0;
+    animation:introFade .6s ease forwards .55s;
   }
-  .together-line b{ color:var(--accent-dark); }
+  .together-line b{ color:var(--accent); }
 
   /* --- envelope --- */
   .envelope-wrap{
@@ -144,9 +194,9 @@
     position:absolute;
     inset:0;
     top:20px;
-    background:linear-gradient(135deg,#f7a58c,var(--accent));
+    background:linear-gradient(135deg,#3a0420,var(--accent));
     border-radius:10px;
-    box-shadow:0 14px 26px rgba(200,95,71,.32);
+    box-shadow:0 14px 30px rgba(255,20,100,.35);
   }
   .env-body::before{
     content:"";
@@ -154,8 +204,8 @@
     left:0; right:0; bottom:0;
     height:100%;
     background:
-      linear-gradient(135deg, transparent 49.3%, rgba(0,0,0,.08) 50%, transparent 50.7%),
-      linear-gradient(-135deg, transparent 49.3%, rgba(0,0,0,.08) 50%, transparent 50.7%);
+      linear-gradient(135deg, transparent 49.3%, rgba(0,0,0,.2) 50%, transparent 50.7%),
+      linear-gradient(-135deg, transparent 49.3%, rgba(0,0,0,.2) 50%, transparent 50.7%);
     border-radius:10px;
   }
   .env-flap{
@@ -170,7 +220,7 @@
     transform-origin:top center;
     transition:transform .7s cubic-bezier(.6,-0.28,.4,1.3);
     z-index:3;
-    filter:drop-shadow(0 4px 6px rgba(0,0,0,.12));
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));
   }
   .envelope.open .env-flap{
     transform:rotateX(180deg);
@@ -184,12 +234,13 @@
     width:34px;
     height:34px;
     border-radius:50%;
-    background:#fff0e8;
+    background:#0d0007;
+    border:1px solid rgba(255,61,129,.5);
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:16px;
-    box-shadow:0 3px 6px rgba(0,0,0,.15);
+    box-shadow:0 3px 10px rgba(255,20,100,.4);
     z-index:4;
     transition:opacity .3s ease, transform .3s ease;
   }
@@ -217,7 +268,7 @@
   .modal-backdrop{
     position:fixed;
     inset:0;
-    background:rgba(90,61,52,.45);
+    background:rgba(0,0,0,.6);
     backdrop-filter:blur(2px);
     display:flex;
     align-items:center;
@@ -234,13 +285,14 @@
   }
   .letter-card{
     background:var(--paper);
+    border:1px solid rgba(255,61,129,.3);
     border-radius:18px;
     padding:28px 24px 24px;
     max-width:380px;
     width:100%;
     max-height:80vh;
     overflow-y:auto;
-    box-shadow:0 20px 50px rgba(0,0,0,.3);
+    box-shadow:0 20px 60px rgba(255,20,100,.25);
     transform:scale(.85) translateY(20px);
     opacity:0;
     transition:transform .45s cubic-bezier(.34,1.56,.64,1), opacity .35s ease;
@@ -253,18 +305,19 @@
   .letter-card h2{
     font-size:18px;
     margin:0 0 14px;
-    color:var(--accent-dark);
+    color:var(--accent);
     text-align:center;
   }
   .letter-card .letter-text{
     font-size:15px;
     line-height:1.7;
+    color:var(--text);
     white-space:pre-line;
   }
   .close-btn{
     display:block;
     margin:22px auto 0;
-    background:var(--accent);
+    background:linear-gradient(135deg,var(--accent),var(--accent-dark));
     color:#fff;
     border:none;
     padding:10px 26px;
@@ -281,8 +334,13 @@
 <div class="hearts" id="hearts"></div>
 
 <div class="page">
-  <h1>Любимая моя 💛</h1>
+  <h1>Любимая моя 🖤</h1>
   <p class="subtitle">мы вместе уже</p>
+
+  <div class="timeline-track" id="timeline-track">
+    <div class="timeline-fill" id="timeline-fill"></div>
+    <span class="timeline-marker" id="timeline-marker">💗</span>
+  </div>
 
   <div class="timer">
     <div class="unit"><span class="num" id="n-months">0</span><span class="label">мес.</span></div>
@@ -368,14 +426,41 @@
     }
     prevSeconds = seconds;
   }
-  tick();
-  setInterval(tick, 1000);
 
-  // ---- показать конверт после появления таймера ----
+  // ---- вступительная анимация: счётчик "разгоняется" от 0 до текущих значений ----
+  const timelineFill = document.getElementById('timeline-fill');
+  const timelineMarker = document.getElementById('timeline-marker');
+  const COUNT_DURATION = 1800;
+
+  function runIntroCount(){
+    const target = calcElapsed(new Date());
+    const startTime = performance.now();
+
+    function frame(now){
+      const t = Math.min((now - startTime) / COUNT_DURATION, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      elMonths.textContent = Math.round(target.months * eased);
+      elDays.textContent = Math.round(target.days * eased);
+      elHours.textContent = pad(Math.round(target.hours * eased));
+      elMinutes.textContent = pad(Math.round(target.minutes * eased));
+      elSeconds.textContent = pad(Math.round(target.seconds * eased));
+      const pct = (eased * 100).toFixed(2) + '%';
+      timelineFill.style.width = pct;
+      timelineMarker.style.left = pct;
+
+      if (t < 1){
+        requestAnimationFrame(frame);
+      } else {
+        prevSeconds = target.seconds;
+        setInterval(tick, 1000);
+        document.getElementById('envelope-wrap').classList.add('show');
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
   window.addEventListener('load', () => {
-    setTimeout(() => {
-      document.getElementById('envelope-wrap').classList.add('show');
-    }, 900);
+    setTimeout(runIntroCount, 500);
   });
 
   // ---- открытие конверта -> письмо ----
@@ -401,7 +486,7 @@
 
   // ---- лёгкие летающие сердечки на фоне ----
   const heartsContainer = document.getElementById('hearts');
-  const heartEmojis = ['💛','💕','✨','🌼'];
+  const heartEmojis = ['💗','🖤','✨','💫'];
   function spawnHeart(){
     const h = document.createElement('div');
     h.className = 'heart';
