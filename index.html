@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Дедушке — с любовью</title>
+<style>
+  :root{
+    --bg1:#fff3e0;
+    --bg2:#ffe0e9;
+    --accent:#e8836b;
+    --accent-dark:#c85f47;
+    --paper:#fffaf3;
+    --text:#5a3d34;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    color:var(--text);
+    overflow-x:hidden;
+  }
+  body{
+    background:linear-gradient(160deg,var(--bg1),var(--bg2) 60%,#ffd6cf);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px 60px;
+  }
+  .page{
+    width:100%;
+    max-width:420px;
+    text-align:center;
+  }
+  h1{
+    font-size:22px;
+    font-weight:700;
+    margin:0 0 6px;
+    color:var(--accent-dark);
+  }
+  .subtitle{
+    font-size:14px;
+    opacity:.75;
+    margin:0 0 28px;
+  }
+
+  /* --- floating hearts background --- */
+  .hearts{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:0;
+  }
+  .heart{
+    position:absolute;
+    bottom:-40px;
+    font-size:18px;
+    opacity:.5;
+    animation:float 9s linear infinite;
+  }
+  @keyframes float{
+    to{ transform:translateY(-110vh) rotate(20deg); opacity:0; }
+  }
+
+  .page > *{ position:relative; z-index:1; }
+
+  /* --- timer --- */
+  .timer{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .unit{
+    background:var(--paper);
+    border-radius:14px;
+    padding:12px 6px;
+    width:70px;
+    box-shadow:0 6px 16px rgba(200,95,71,.15);
+  }
+  .unit .num{
+    font-size:26px;
+    font-weight:800;
+    color:var(--accent-dark);
+    font-variant-numeric:tabular-nums;
+    display:block;
+    transition:transform .25s ease;
+  }
+  .unit .num.bump{ transform:scale(1.18); }
+  .unit .label{
+    font-size:10px;
+    letter-spacing:.03em;
+    opacity:.65;
+    margin-top:2px;
+    display:block;
+  }
+  .together-line{
+    font-size:15px;
+    margin:18px 0 34px;
+  }
+  .together-line b{ color:var(--accent-dark); }
+
+  /* --- envelope --- */
+  .envelope-wrap{
+    margin-top:10px;
+    opacity:0;
+    transform:translateY(16px);
+    transition:opacity .8s ease, transform .8s ease;
+  }
+  .envelope-wrap.show{
+    opacity:1;
+    transform:translateY(0);
+  }
+  .hint{
+    font-size:13px;
+    opacity:.7;
+    margin-top:14px;
+    animation:pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ opacity:.5; }
+    50%{ opacity:.9; }
+  }
+
+  .envelope{
+    width:230px;
+    height:150px;
+    margin:0 auto;
+    position:relative;
+    cursor:pointer;
+    perspective:800px;
+    animation:idle-bounce 2.6s ease-in-out infinite;
+  }
+  @keyframes idle-bounce{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-6px); }
+  }
+  .env-body{
+    position:absolute;
+    inset:0;
+    top:20px;
+    background:linear-gradient(135deg,#f7a58c,var(--accent));
+    border-radius:10px;
+    box-shadow:0 14px 26px rgba(200,95,71,.32);
+  }
+  .env-body::before{
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:100%;
+    background:
+      linear-gradient(135deg, transparent 49.3%, rgba(0,0,0,.08) 50%, transparent 50.7%),
+      linear-gradient(-135deg, transparent 49.3%, rgba(0,0,0,.08) 50%, transparent 50.7%);
+    border-radius:10px;
+  }
+  .env-flap{
+    position:absolute;
+    top:20px;
+    left:0;
+    width:0;
+    height:0;
+    border-left:115px solid transparent;
+    border-right:115px solid transparent;
+    border-top:78px solid var(--accent-dark);
+    transform-origin:top center;
+    transition:transform .7s cubic-bezier(.6,-0.28,.4,1.3);
+    z-index:3;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.12));
+  }
+  .envelope.open .env-flap{
+    transform:rotateX(180deg);
+    z-index:1;
+  }
+  .env-seal{
+    position:absolute;
+    top:58px;
+    left:50%;
+    transform:translateX(-50%);
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:#fff0e8;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    box-shadow:0 3px 6px rgba(0,0,0,.15);
+    z-index:4;
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .envelope.open .env-seal{
+    opacity:0;
+    transform:translateX(-50%) scale(.4);
+  }
+  .env-letter{
+    position:absolute;
+    left:14px;
+    right:14px;
+    top:34px;
+    height:96px;
+    background:var(--paper);
+    border-radius:6px;
+    box-shadow:0 2px 4px rgba(0,0,0,.1);
+    z-index:2;
+    transition:transform .6s ease .15s;
+  }
+  .envelope.open .env-letter{
+    transform:translateY(-92px) scale(1.02);
+  }
+
+  /* --- letter modal --- */
+  .modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(90,61,52,.45);
+    backdrop-filter:blur(2px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .4s ease;
+    z-index:10;
+  }
+  .modal-backdrop.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .letter-card{
+    background:var(--paper);
+    border-radius:18px;
+    padding:28px 24px 24px;
+    max-width:380px;
+    width:100%;
+    max-height:80vh;
+    overflow-y:auto;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+    transform:scale(.85) translateY(20px);
+    opacity:0;
+    transition:transform .45s cubic-bezier(.34,1.56,.64,1), opacity .35s ease;
+    text-align:left;
+  }
+  .modal-backdrop.show .letter-card{
+    transform:scale(1) translateY(0);
+    opacity:1;
+  }
+  .letter-card h2{
+    font-size:18px;
+    margin:0 0 14px;
+    color:var(--accent-dark);
+    text-align:center;
+  }
+  .letter-card .letter-text{
+    font-size:15px;
+    line-height:1.7;
+    white-space:pre-line;
+  }
+  .close-btn{
+    display:block;
+    margin:22px auto 0;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:10px 26px;
+    border-radius:999px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .close-btn:active{ transform:scale(.97); }
+</style>
+</head>
+<body>
+
+<div class="hearts" id="hearts"></div>
+
+<div class="page">
+  <h1>Дорогому дедушке 💛</h1>
+  <p class="subtitle">мы вместе уже</p>
+
+  <div class="timer">
+    <div class="unit"><span class="num" id="n-months">0</span><span class="label">мес.</span></div>
+    <div class="unit"><span class="num" id="n-days">0</span><span class="label">дн.</span></div>
+    <div class="unit"><span class="num" id="n-hours">00</span><span class="label">час.</span></div>
+    <div class="unit"><span class="num" id="n-minutes">00</span><span class="label">мин.</span></div>
+    <div class="unit"><span class="num" id="n-seconds">00</span><span class="label">сек.</span></div>
+  </div>
+
+  <p class="together-line">и хотим поделиться этим именно с <b>тобой</b> ✨</p>
+
+  <div class="envelope-wrap" id="envelope-wrap">
+    <div class="envelope" id="envelope">
+      <div class="env-flap"></div>
+      <div class="env-letter"></div>
+      <div class="env-body"></div>
+      <div class="env-seal">💌</div>
+    </div>
+    <p class="hint">нажми на конверт</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal">
+  <div class="letter-card">
+    <h2>Дорогой дедушка!</h2>
+    <!-- ЗАМЕНИТЕ ТЕКСТ ПИСЬМА ЗДЕСЬ -->
+    <div class="letter-text" id="letter-text">Здесь будет тёплое письмо для тебя — мы напишем его совсем скоро и обязательно расскажем обо всём, что для нас важно.
+
+С любовью,
+[ваши имена]</div>
+    <button class="close-btn" id="close-btn">Закрыть</button>
+  </div>
+</div>
+
+<script>
+  // ---- дата начала отсчёта ----
+  const START_DATE = new Date("2026-03-15T00:00:00");
+
+  const elMonths = document.getElementById('n-months');
+  const elDays = document.getElementById('n-days');
+  const elHours = document.getElementById('n-hours');
+  const elMinutes = document.getElementById('n-minutes');
+  const elSeconds = document.getElementById('n-seconds');
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function bump(el){
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+  }
+
+  function calcElapsed(now){
+    let months = (now.getFullYear() - START_DATE.getFullYear()) * 12 + (now.getMonth() - START_DATE.getMonth());
+    let monthAnchor = new Date(START_DATE);
+    monthAnchor.setMonth(monthAnchor.getMonth() + months);
+    if (monthAnchor > now){
+      months--;
+      monthAnchor = new Date(START_DATE);
+      monthAnchor.setMonth(monthAnchor.getMonth() + months);
+    }
+    let diffMs = now - monthAnchor;
+    const days = Math.floor(diffMs / 86400000);
+    diffMs -= days * 86400000;
+    const hours = Math.floor(diffMs / 3600000);
+    diffMs -= hours * 3600000;
+    const minutes = Math.floor(diffMs / 60000);
+    diffMs -= minutes * 60000;
+    const seconds = Math.floor(diffMs / 1000);
+    return { months, days, hours, minutes, seconds };
+  }
+
+  let prevSeconds = null;
+  function tick(){
+    const { months, days, hours, minutes, seconds } = calcElapsed(new Date());
+    elMonths.textContent = months;
+    elDays.textContent = days;
+    elHours.textContent = pad(hours);
+    elMinutes.textContent = pad(minutes);
+    elSeconds.textContent = pad(seconds);
+    if (prevSeconds !== null && seconds !== prevSeconds){
+      bump(elSeconds);
+    }
+    prevSeconds = seconds;
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // ---- показать конверт после появления таймера ----
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('envelope-wrap').classList.add('show');
+    }, 900);
+  });
+
+  // ---- открытие конверта -> письмо ----
+  const envelope = document.getElementById('envelope');
+  const modal = document.getElementById('modal');
+  const closeBtn = document.getElementById('close-btn');
+
+  envelope.addEventListener('click', () => {
+    envelope.classList.add('open');
+    setTimeout(() => {
+      modal.classList.add('show');
+    }, 500);
+  });
+
+  function closeModal(){
+    modal.classList.remove('show');
+    setTimeout(() => envelope.classList.remove('open'), 300);
+  }
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // ---- лёгкие летающие сердечки на фоне ----
+  const heartsContainer = document.getElementById('hearts');
+  const heartEmojis = ['💛','💕','✨','🌼'];
+  function spawnHeart(){
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.textContent = heartEmojis[Math.floor(Math.random()*heartEmojis.length)];
+    h.style.left = Math.random()*100 + 'vw';
+    h.style.animationDuration = (7 + Math.random()*5) + 's';
+    h.style.fontSize = (14 + Math.random()*14) + 'px';
+    heartsContainer.appendChild(h);
+    setTimeout(() => h.remove(), 13000);
+  }
+  setInterval(spawnHeart, 1200);
+  spawnHeart();
+</script>
+
+</body>
+</html>
