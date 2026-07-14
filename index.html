@@ -118,32 +118,46 @@
     to{ transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(var(--s)); opacity:0; }
   }
 
-  /* --- timeline progress --- */
-  .timeline-track{
-    position:relative;
-    height:6px;
-    max-width:260px;
-    margin:0 auto 22px;
-    background:rgba(255,255,255,.08);
-    border-radius:999px;
-    opacity:0;
-  }
-  body.ready .timeline-track{ animation:introFade .6s ease forwards .3s; }
-  .timeline-fill{
+  /* --- flip-calendar date card (на заставке) --- */
+  .intro-date{
     position:absolute;
-    inset:0;
-    width:0%;
-    background:linear-gradient(90deg,var(--accent-dark),var(--accent));
-    border-radius:999px;
-    box-shadow:0 0 10px rgba(255,61,129,.6);
-  }
-  .timeline-marker{
-    position:absolute;
+    left:50%;
     top:50%;
-    left:0%;
-    font-size:16px;
     transform:translate(-50%,-50%);
-    filter:drop-shadow(0 0 6px var(--accent));
+    background:linear-gradient(180deg,#241019,#0d0208);
+    border:1px solid rgba(255,61,129,.4);
+    border-radius:16px;
+    padding:20px 30px;
+    font-size:32px;
+    font-weight:800;
+    letter-spacing:.05em;
+    color:var(--accent);
+    font-variant-numeric:tabular-nums;
+    text-shadow:0 0 16px rgba(255,61,129,.55);
+    box-shadow:0 14px 44px rgba(255,20,100,.3);
+    opacity:0;
+    transition:opacity .3s ease;
+    z-index:6;
+  }
+  .intro-date::after{
+    content:"";
+    position:absolute;
+    left:8px; right:8px;
+    top:50%;
+    height:2px;
+    background:rgba(0,0,0,.6);
+  }
+  .intro-date.on{ opacity:1; }
+  .intro-date.flipping{ animation:dateFlick .12s linear infinite; }
+  @keyframes dateFlick{
+    0%,100%{ transform:translate(-50%,-50%) rotateX(0); }
+    50%{ transform:translate(-50%,-50%) rotateX(16deg); }
+  }
+  .intro-date.settle{ animation:dateSettle .5s cubic-bezier(.34,1.56,.64,1) forwards; }
+  @keyframes dateSettle{
+    0%{ transform:translate(-50%,-50%) scale(1); }
+    45%{ transform:translate(-50%,-50%) scale(1.14); }
+    100%{ transform:translate(-50%,-50%) scale(1); }
   }
 
   /* --- floating hearts background --- */
@@ -217,19 +231,21 @@
 
   /* --- envelope --- */
   .envelope-wrap{
-    margin-top:10px;
+    margin-top:6px;
     opacity:0;
-    transform:translateY(16px);
-    transition:opacity .8s ease, transform .8s ease;
+    transform:translateY(36px) scale(.93);
+    filter:brightness(0);
+    transition:opacity 1.1s ease, transform 1.1s ease, filter 1.3s ease;
   }
   .envelope-wrap.show{
     opacity:1;
-    transform:translateY(0);
+    transform:translateY(0) scale(1);
+    filter:brightness(1);
   }
   .hint{
     font-size:13px;
     opacity:.7;
-    margin-top:14px;
+    margin-top:18px;
     animation:pulse 1.8s ease-in-out infinite;
   }
   @keyframes pulse{
@@ -238,90 +254,126 @@
   }
 
   .envelope{
-    width:230px;
-    height:150px;
-    margin:0 auto;
     position:relative;
+    width:100%;
+    aspect-ratio:16/10;
+    margin:0 auto;
     cursor:pointer;
-    perspective:800px;
-    animation:idle-bounce 2.6s ease-in-out infinite;
+    perspective:1200px;
+    animation:idle-bounce 3s ease-in-out infinite;
   }
   @keyframes idle-bounce{
     0%,100%{ transform:translateY(0); }
-    50%{ transform:translateY(-6px); }
+    50%{ transform:translateY(-7px); }
   }
-  .env-body{
-    position:absolute;
-    inset:0;
-    top:20px;
-    background:linear-gradient(135deg,#3a0420,var(--accent));
-    border-radius:10px;
-    box-shadow:0 14px 30px rgba(255,20,100,.35);
-  }
-  .env-body::before{
+  .envelope::before{
     content:"";
     position:absolute;
-    left:0; right:0; bottom:0;
-    height:100%;
-    background:
-      linear-gradient(135deg, transparent 49.3%, rgba(0,0,0,.2) 50%, transparent 50.7%),
-      linear-gradient(-135deg, transparent 49.3%, rgba(0,0,0,.2) 50%, transparent 50.7%);
+    left:8%; right:8%;
+    bottom:-16px;
+    height:32px;
+    background:radial-gradient(ellipse at center, rgba(255,61,129,.45), transparent 70%);
+    filter:blur(9px);
+  }
+  .env-back{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(160deg,#4a0726,#160109);
+    border:1px solid rgba(255,61,129,.35);
+    border-radius:16px;
+    box-shadow:0 20px 55px rgba(255,20,100,.32), inset 0 0 46px rgba(255,61,129,.08);
+  }
+  .env-letter{
+    position:absolute;
+    left:5%; right:5%;
+    top:7%;
+    height:86%;
+    background:linear-gradient(180deg,#fff6fa,#ffdcec);
     border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,.35);
+    z-index:2;
+    transition:transform .65s ease .18s;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding-top:4%;
+    font-size:20px;
+  }
+  .env-letter::after{
+    content:"";
+    position:absolute;
+    left:16%; right:16%;
+    top:38%;
+    height:38%;
+    background:repeating-linear-gradient(to bottom, rgba(224,17,111,.3) 0 2px, transparent 2px 14px);
+    border-radius:2px;
+  }
+  .envelope.open .env-letter{
+    transform:translateY(-78%) scale(1.03);
+  }
+  .env-pocket{
+    position:absolute;
+    inset:0;
+    clip-path:polygon(0 0, 50% 58%, 100% 0, 100% 100%, 0 100%);
+    background:linear-gradient(170deg,#ff4d8c 0%, #b00955 52%, #5c0330 100%);
+    border-radius:16px;
+    z-index:3;
+  }
+  .env-pocket::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(115deg, transparent 49.5%, rgba(0,0,0,.28) 50%, transparent 50.5%),
+      linear-gradient(-115deg, transparent 49.5%, rgba(0,0,0,.28) 50%, transparent 50.5%),
+      linear-gradient(180deg, transparent 60%, rgba(0,0,0,.22));
+    border-radius:16px;
   }
   .env-flap{
     position:absolute;
-    top:20px;
-    left:0;
-    width:0;
-    height:0;
-    border-left:115px solid transparent;
-    border-right:115px solid transparent;
-    border-top:78px solid var(--accent-dark);
+    top:0; left:0; right:0;
+    height:56%;
+    clip-path:polygon(0 0, 100% 0, 50% 100%);
+    background:linear-gradient(185deg,#ff5c95 8%,#d40b68 55%,#96064a 100%);
+    border-radius:16px 16px 0 0;
     transform-origin:top center;
     transition:transform .7s cubic-bezier(.6,-0.28,.4,1.3);
-    z-index:3;
-    filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));
+    z-index:4;
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));
+  }
+  .env-flap::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    clip-path:polygon(0 0, 100% 0, 50% 100%);
+    background:linear-gradient(120deg, rgba(255,255,255,.16), transparent 45%);
   }
   .envelope.open .env-flap{
     transform:rotateX(180deg);
     z-index:1;
+    filter:none;
   }
   .env-seal{
     position:absolute;
-    top:58px;
+    top:56%;
     left:50%;
-    transform:translateX(-50%);
-    width:34px;
-    height:34px;
+    transform:translate(-50%,-50%);
+    width:46px;
+    height:46px;
     border-radius:50%;
-    background:#0d0007;
-    border:1px solid rgba(255,61,129,.5);
+    background:radial-gradient(circle at 35% 30%, #ff7cab, #c40a60 72%);
+    border:2px solid rgba(0,0,0,.35);
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:16px;
-    box-shadow:0 3px 10px rgba(255,20,100,.4);
-    z-index:4;
+    font-size:20px;
+    box-shadow:0 4px 14px rgba(0,0,0,.5), 0 0 20px rgba(255,61,129,.55);
+    z-index:5;
     transition:opacity .3s ease, transform .3s ease;
   }
   .envelope.open .env-seal{
     opacity:0;
-    transform:translateX(-50%) scale(.4);
-  }
-  .env-letter{
-    position:absolute;
-    left:14px;
-    right:14px;
-    top:34px;
-    height:96px;
-    background:var(--paper);
-    border-radius:6px;
-    box-shadow:0 2px 4px rgba(0,0,0,.1);
-    z-index:2;
-    transition:transform .6s ease .15s;
-  }
-  .envelope.open .env-letter{
-    transform:translateY(-92px) scale(1.02);
+    transform:translate(-50%,-50%) scale(.4);
   }
 
   /* --- letter modal --- */
@@ -394,6 +446,7 @@
 <div class="intro-overlay" id="intro">
   <div class="intro-flash"></div>
   <div class="intro-heart" id="intro-heart">💗</div>
+  <div class="intro-date" id="intro-date">15.03.2026</div>
 </div>
 
 <div class="hearts" id="hearts"></div>
@@ -401,11 +454,6 @@
 <div class="page">
   <h1>Любимая моя 🖤</h1>
   <p class="subtitle">мы вместе уже</p>
-
-  <div class="timeline-track" id="timeline-track">
-    <div class="timeline-fill" id="timeline-fill"></div>
-    <span class="timeline-marker" id="timeline-marker">💗</span>
-  </div>
 
   <div class="timer">
     <div class="unit"><span class="num" id="n-months">0</span><span class="label">мес.</span></div>
@@ -419,9 +467,10 @@
 
   <div class="envelope-wrap" id="envelope-wrap">
     <div class="envelope" id="envelope">
+      <div class="env-back"></div>
+      <div class="env-letter">💗</div>
+      <div class="env-pocket"></div>
       <div class="env-flap"></div>
-      <div class="env-letter"></div>
-      <div class="env-body"></div>
       <div class="env-seal">💌</div>
     </div>
     <p class="hint">нажми на конверт</p>
@@ -493,8 +542,6 @@
   }
 
   // ---- вступительная анимация: счётчик "разгоняется" от 0 до текущих значений ----
-  const timelineFill = document.getElementById('timeline-fill');
-  const timelineMarker = document.getElementById('timeline-marker');
   const COUNT_DURATION = 1800;
 
   function runIntroCount(){
@@ -509,9 +556,6 @@
       elHours.textContent = pad(Math.round(target.hours * eased));
       elMinutes.textContent = pad(Math.round(target.minutes * eased));
       elSeconds.textContent = pad(Math.round(target.seconds * eased));
-      const pct = (eased * 100).toFixed(2) + '%';
-      timelineFill.style.width = pct;
-      timelineMarker.style.left = pct;
 
       if (t < 1){
         requestAnimationFrame(frame);
@@ -519,6 +563,36 @@
         prevSeconds = target.seconds;
         setInterval(tick, 1000);
         document.getElementById('envelope-wrap').classList.add('show');
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---- пролёт дат: перекидной календарь от начала отношений до сегодня ----
+  const introDate = document.getElementById('intro-date');
+  const DATE_FLIGHT_MS = 2400;
+
+  function fmtDate(d){
+    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+  }
+
+  function runDateFlight(done){
+    const startMs = START_DATE.getTime();
+    const totalDays = Math.max(1, Math.floor((Date.now() - startMs) / 86400000));
+    introDate.classList.add('on', 'flipping');
+    const t0 = performance.now();
+
+    function frame(now){
+      const t = Math.min((now - t0) / DATE_FLIGHT_MS, 1);
+      const eased = t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+      const dayIdx = Math.round(totalDays * eased);
+      introDate.textContent = fmtDate(new Date(startMs + dayIdx * 86400000));
+      if (t < 1){
+        requestAnimationFrame(frame);
+      } else {
+        introDate.classList.remove('flipping');
+        introDate.classList.add('settle');
+        setTimeout(done, 700);
       }
     }
     requestAnimationFrame(frame);
@@ -545,11 +619,13 @@
       intro.appendChild(p);
     }
     setTimeout(() => {
-      intro.classList.add('done');
-      document.body.classList.add('ready');
-      setTimeout(runIntroCount, 450);
-      setTimeout(() => intro.remove(), 700);
-    }, 600);
+      runDateFlight(() => {
+        intro.classList.add('done');
+        document.body.classList.add('ready');
+        setTimeout(runIntroCount, 450);
+        setTimeout(() => intro.remove(), 700);
+      });
+    }, 650);
   }
 
   window.addEventListener('load', () => {
