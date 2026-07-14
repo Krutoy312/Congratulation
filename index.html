@@ -176,6 +176,34 @@
     50%{ transform:translate(-50%,-50%) rotateX(16deg); }
   }
   .intro-date.settle{ animation:dateSettle .5s cubic-bezier(.34,1.56,.64,1) forwards; }
+  .intro-date.gone{
+    opacity:0 !important;
+    transition:opacity .9s ease;
+  }
+
+  /* --- финальная надпись из тени --- */
+  .intro-final{
+    position:absolute;
+    left:6%;
+    right:6%;
+    top:50%;
+    transform:translateY(-50%);
+    text-align:center;
+    font-size:27px;
+    font-weight:800;
+    line-height:1.55;
+    letter-spacing:.03em;
+    color:var(--accent);
+    text-shadow:0 0 22px rgba(255,61,129,.65);
+    opacity:0;
+    filter:brightness(0);
+    transition:opacity 1.5s ease, filter 1.8s ease;
+    z-index:6;
+  }
+  .intro-final.on{
+    opacity:1;
+    filter:brightness(1);
+  }
   @keyframes dateSettle{
     0%{ transform:translate(-50%,-50%) scale(1); }
     45%{ transform:translate(-50%,-50%) scale(1.14); }
@@ -470,6 +498,7 @@
   <div class="intro-heart" id="intro-heart">💗</div>
   <div class="intro-event" id="intro-event"></div>
   <div class="intro-date" id="intro-date">01.01.2026</div>
+  <div class="intro-final" id="intro-final">15.03.2026 — бесконечность<br>Я люблю тебя</div>
 </div>
 
 <div class="hearts" id="hearts"></div>
@@ -503,11 +532,11 @@
 <div class="modal-backdrop" id="modal">
   <div class="letter-card">
     <h2>Любимая!</h2>
-    <!-- ЗАМЕНИТЕ ТЕКСТ ПИСЬМА ЗДЕСЬ -->
-    <div class="letter-text" id="letter-text">Здесь будет тёплое письмо для тебя — я напишу его совсем скоро и обязательно расскажу обо всём, что для меня важно.
+    <div class="letter-text" id="letter-text">Камила, мы уже встречаемся 4 месяца. Ты самая прекрасная женщина, которую я когда-либо мог встретить. Я люблю в тебе всё: твой характер, манеру речи и поведения, то, как ты думаешь, твой голос, волосы, губы, глаза, лицо, талию, ну и жопу с грудью конечно ахахаха.
 
-С любовью,
-[твоё имя]</div>
+Ты та самая, с которой я хочу провести всю свою жизнь. Сейчас у нас есть некоторые трудности, но я готов приложить все усилия, лишь бы оказаться рядом с тобой.
+
+Я люблю тебя, Камила. Ты самое лучшее, что когда-либо случалось со мной. ❤️</div>
     <button class="close-btn" id="close-btn">Закрыть</button>
   </div>
 </div>
@@ -617,9 +646,11 @@
   // на событии замедляется и над ним всплывает фраза ----
   const introDate = document.getElementById('intro-date');
   const introEvent = document.getElementById('intro-event');
+  const introFinal = document.getElementById('intro-final');
   const FLIGHT_START = new Date('2026-01-01T00:00:00').getTime();
+  const FLIGHT_END = new Date('2026-07-15T00:00:00').getTime();
   const TRANSIT_MS = 200;   // быстрый пролёт между событиями
-  const DWELL_MS = 1300;    // замедление на событии
+  const DWELL_MS = 2500;    // замедление на событии
 
   function fmtDate(d){
     return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
@@ -637,7 +668,7 @@
       segs.push({ from:f, to:t, dur:DWELL_MS, text });
       cursor = t;
     }
-    if (cursor < nowMs) segs.push({ from:cursor, to:nowMs, dur:500, text:null });
+    if (cursor < FLIGHT_END) segs.push({ from:cursor, to:FLIGHT_END, dur:500, text:null });
     return segs;
   }
 
@@ -653,9 +684,16 @@
       flightDone = true;
       introEvent.classList.remove('on');
       introDate.classList.remove('flipping');
-      introDate.textContent = fmtDate(new Date());
+      introDate.textContent = fmtDate(new Date(FLIGHT_END));
       introDate.classList.add('settle');
-      setTimeout(done, 700);
+      // календарь затухает -> из тени появляется финальная надпись
+      setTimeout(() => {
+        introDate.classList.add('gone');
+        setTimeout(() => {
+          introFinal.classList.add('on');
+          setTimeout(done, 3600);
+        }, 900);
+      }, 1100);
     }
 
     // тап по экрану — промотать пролёт до конца
