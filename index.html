@@ -57,26 +57,26 @@
     to{ opacity:.8; transform:translateY(0); }
   }
 
-  /* --- events banner над таймером --- */
-  .event-banner{
-    min-height:46px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:16px;
-    font-weight:600;
-    line-height:1.35;
+  /* --- текст события над календарём на заставке --- */
+  .intro-event{
+    position:absolute;
+    left:7%;
+    right:7%;
+    bottom:calc(50% + 66px);
+    text-align:center;
+    font-size:19px;
+    font-weight:700;
+    line-height:1.4;
     color:var(--accent);
-    text-shadow:0 0 14px rgba(255,61,129,.45);
-    margin:0 0 12px;
-    padding:0 10px;
+    text-shadow:0 0 16px rgba(255,61,129,.55);
     opacity:0;
-    transform:translateY(8px) scale(.96);
+    transform:translateY(10px);
     transition:opacity .3s ease, transform .3s ease;
+    z-index:6;
   }
-  .event-banner.on{
+  .intro-event.on{
     opacity:1;
-    transform:translateY(0) scale(1);
+    transform:translateY(0);
   }
 
   /* --- heartbeat intro overlay --- */
@@ -468,7 +468,8 @@
 <div class="intro-overlay" id="intro">
   <div class="intro-flash"></div>
   <div class="intro-heart" id="intro-heart">💗</div>
-  <div class="intro-date" id="intro-date">15.03.2026</div>
+  <div class="intro-event" id="intro-event"></div>
+  <div class="intro-date" id="intro-date">01.01.2026</div>
 </div>
 
 <div class="hearts" id="hearts"></div>
@@ -476,8 +477,6 @@
 <div class="page">
   <h1>Любимая моя 🖤</h1>
   <p class="subtitle">мы вместе уже</p>
-
-  <div class="event-banner" id="event-banner"></div>
 
   <div class="timer">
     <div class="unit"><span class="num" id="n-months">0</span><span class="label">мес.</span></div>
@@ -565,8 +564,34 @@
     prevSeconds = seconds;
   }
 
-  // ---- вступительная анимация: таймер "проживает" всю историю с событиями ----
-  // на событии таймер замедляется и над ним всплывает фраза
+  // ---- вступительная анимация: счётчик "разгоняется" от 0 до текущих значений ----
+  const COUNT_DURATION = 1800;
+
+  function runIntroCount(){
+    const target = calcElapsed(new Date());
+    const startTime = performance.now();
+
+    function frame(now){
+      const t = Math.min((now - startTime) / COUNT_DURATION, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      elMonths.textContent = Math.round(target.months * eased);
+      elDays.textContent = Math.round(target.days * eased);
+      elHours.textContent = pad(Math.round(target.hours * eased));
+      elMinutes.textContent = pad(Math.round(target.minutes * eased));
+      elSeconds.textContent = pad(Math.round(target.seconds * eased));
+
+      if (t < 1){
+        requestAnimationFrame(frame);
+      } else {
+        prevSeconds = target.seconds;
+        setInterval(tick, 1000);
+        document.getElementById('envelope-wrap').classList.add('show');
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---- события для пролёта дат ----
   const EVENTS = [
     ['2026-01-01','2026-01-05','Привет'],
     ['2026-01-08','2026-01-12','Ты можешь какому-то помочь?'],
@@ -588,33 +613,22 @@
     ['2026-06-18','2026-06-25','совместные мероприятия'],
   ];
 
-  const SWEEP_START = new Date('2026-01-01T00:00:00').getTime();
+  // ---- пролёт дат с событиями: календарь листается от знакомства до сегодня,
+  // на событии замедляется и над ним всплывает фраза ----
+  const introDate = document.getElementById('intro-date');
+  const introEvent = document.getElementById('intro-event');
+  const FLIGHT_START = new Date('2026-01-01T00:00:00').getTime();
   const TRANSIT_MS = 200;   // быстрый пролёт между событиями
-  const DWELL_MS = 1250;    // замедление на событии
+  const DWELL_MS = 1300;    // замедление на событии
 
-  const eventBanner = document.getElementById('event-banner');
-
-  function setTimerTo(ms){
-    if (ms <= START_DATE.getTime()){
-      elMonths.textContent = 0;
-      elDays.textContent = 0;
-      elHours.textContent = '00';
-      elMinutes.textContent = '00';
-      elSeconds.textContent = '00';
-      return;
-    }
-    const e = calcElapsed(new Date(ms));
-    elMonths.textContent = e.months;
-    elDays.textContent = e.days;
-    elHours.textContent = pad(e.hours);
-    elMinutes.textContent = pad(e.minutes);
-    elSeconds.textContent = pad(e.seconds);
+  function fmtDate(d){
+    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
   }
 
-  function buildSegments(){
+  function buildFlightSegments(){
     const segs = [];
     const nowMs = Date.now();
-    let cursor = SWEEP_START;
+    let cursor = FLIGHT_START;
     for (const [from, to, text] of EVENTS){
       const f = new Date(from + 'T00:00:00').getTime();
       const t = Math.min(new Date(to + 'T23:59:59').getTime(), nowMs);
@@ -623,82 +637,55 @@
       segs.push({ from:f, to:t, dur:DWELL_MS, text });
       cursor = t;
     }
-    if (cursor < nowMs) segs.push({ from:cursor, to:nowMs, dur:600, text:null });
+    if (cursor < nowMs) segs.push({ from:cursor, to:nowMs, dur:500, text:null });
     return segs;
   }
 
-  let sweepDone = false;
-  function finishSweep(){
-    if (sweepDone) return;
-    sweepDone = true;
-    eventBanner.classList.remove('on');
-    const t = calcElapsed(new Date());
-    prevSeconds = t.seconds;
-    tick();
-    setInterval(tick, 1000);
-    document.getElementById('envelope-wrap').classList.add('show');
-  }
+  let flightDone = false;
 
-  function runIntroCount(){
-    const segs = buildSegments();
+  function runDateFlight(done){
+    const segs = buildFlightSegments();
     let i = 0;
+    introDate.classList.add('on');
+
+    function finish(){
+      if (flightDone) return;
+      flightDone = true;
+      introEvent.classList.remove('on');
+      introDate.classList.remove('flipping');
+      introDate.textContent = fmtDate(new Date());
+      introDate.classList.add('settle');
+      setTimeout(done, 700);
+    }
+
+    // тап по экрану — промотать пролёт до конца
+    document.addEventListener('click', finish, { once:true });
 
     function runSeg(){
-      if (sweepDone) return;
-      if (i >= segs.length){ finishSweep(); return; }
+      if (flightDone) return;
+      if (i >= segs.length){ finish(); return; }
       const s = segs[i++];
       if (s.text){
-        eventBanner.classList.remove('on');
-        void eventBanner.offsetWidth;
-        eventBanner.textContent = s.text;
-        eventBanner.classList.add('on');
+        introDate.classList.remove('flipping');
+        introEvent.classList.remove('on');
+        void introEvent.offsetWidth;
+        introEvent.textContent = s.text;
+        introEvent.classList.add('on');
       } else {
-        eventBanner.classList.remove('on');
+        introDate.classList.add('flipping');
+        introEvent.classList.remove('on');
       }
       const t0 = performance.now();
       function frame(now){
-        if (sweepDone) return;
+        if (flightDone) return;
         const t = Math.min((now - t0) / s.dur, 1);
-        setTimerTo(s.from + (s.to - s.from) * t);
+        introDate.textContent = fmtDate(new Date(s.from + (s.to - s.from) * t));
         if (t < 1) requestAnimationFrame(frame);
         else runSeg();
       }
       requestAnimationFrame(frame);
     }
     runSeg();
-
-    // тап по экрану — промотать историю до конца
-    document.addEventListener('click', finishSweep, { once:true });
-  }
-
-  // ---- пролёт дат: перекидной календарь от начала отношений до сегодня ----
-  const introDate = document.getElementById('intro-date');
-  const DATE_FLIGHT_MS = 2400;
-
-  function fmtDate(d){
-    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
-  }
-
-  function runDateFlight(done){
-    const startMs = START_DATE.getTime();
-    const totalDays = Math.max(1, Math.floor((Date.now() - startMs) / 86400000));
-    introDate.classList.add('on', 'flipping');
-    const t0 = performance.now();
-
-    function frame(now){
-      const t = Math.min((now - t0) / DATE_FLIGHT_MS, 1);
-      const eased = t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
-      const dayIdx = Math.round(totalDays * eased);
-      introDate.textContent = fmtDate(new Date(startMs + dayIdx * 86400000));
-      if (t < 1){
-        requestAnimationFrame(frame);
-      } else {
-        introDate.classList.remove('flipping');
-        introDate.classList.add('settle');
-        setTimeout(done, 700);
-      }
-    }
-    requestAnimationFrame(frame);
   }
 
   // ---- заставка: стук сердца -> взрыв сердечек -> открытие страницы ----
